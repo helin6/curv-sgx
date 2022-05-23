@@ -16,6 +16,7 @@ use curve25519_dalek::constants::BASEPOINT_ORDER;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_COMPRESSED;
 use curve25519_dalek::ristretto::CompressedRistretto;
 use curve25519_dalek::scalar::Scalar;
+use curve25519_dalek::traits::{IsIdentity, Identity};
 use rand::thread_rng;
 use serde::de::{self, Error, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
@@ -79,6 +80,10 @@ impl ECScalar for RistrettoScalar {
             purpose: "zero",
             fe: q_fe.get_element(),
         }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
     }
 
     fn get_element(&self) -> SK {
@@ -255,6 +260,17 @@ impl ECPoint for RistrettoCurvPoint {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = RistrettoScalar;
+
+    fn zero() -> Self {
+        RistrettoCurvPoint {
+            purpose: "zero",
+            ge: PK::identity(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.ge.is_identity()
+    }
 
     fn base_point2() -> RistrettoCurvPoint {
         let g: GE = ECPoint::generator();

@@ -75,6 +75,10 @@ impl ECScalar for Ed25519Scalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -272,6 +276,20 @@ impl ECPoint for Ed25519Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Ed25519Scalar;
+
+    fn zero() -> Ed25519Point {
+        Ed25519Point {
+            purpose: "zero",
+            ge: ge_scalarmult_base(&[
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0,
+            ]),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Ed25519Point {
         let g: GE = ECPoint::generator();

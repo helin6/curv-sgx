@@ -78,6 +78,10 @@ impl ECScalar for Secp256r1Scalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        bool::from(self.fe.is_zero())
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -240,6 +244,19 @@ impl ECPoint for Secp256r1Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = Secp256r1Scalar;
+
+    fn zero() -> Secp256r1Point {
+        let new_point = AffinePoint::identity().to_encoded_point(false);
+        let verify_key = VerifyKey::from_encoded_point(&new_point).unwrap();
+        Secp256r1Point {
+            purpose: "zero",
+            ge: verify_key
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
 
     fn base_point2() -> Secp256r1Point {
         let mut v = vec![4_u8];

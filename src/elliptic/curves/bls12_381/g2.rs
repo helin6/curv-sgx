@@ -87,6 +87,10 @@ impl ECScalar for FieldScalar {
         }
     }
 
+    fn is_zero(&self) -> bool {
+        self == &Self::zero()
+    }
+
     fn get_element(&self) -> SK {
         self.fe
     }
@@ -292,6 +296,17 @@ impl ECPoint for G2Point {
     type SecretKey = SK;
     type PublicKey = PK;
     type Scalar = FieldScalar;
+
+    fn zero() -> Self {
+        G2Point {
+            purpose: "zero",
+            ge: PK::zero(),
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.ge.is_zero()
+    }
 
     fn base_point2() -> G2Point {
         const BASE_POINT2: [u8; 192] = [
