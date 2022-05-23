@@ -430,21 +430,26 @@ impl ECPoint for Secp256k1Point {
         }
     }
     fn pk_to_key_slice(&self) -> Vec<u8> {
-        let mut v = vec![4_u8];
-        let x_vec = BigInt::to_bytes(&self.x_coor().unwrap());
-        let y_vec = BigInt::to_bytes(&self.y_coor().unwrap());
+        match self.ge {
+            None => [0u8; 65].to_vec(),
+            Some(_ge) => {
+                let mut v = vec![4_u8];
+                let x_vec = BigInt::to_bytes(&self.x_coor().unwrap());
+                let y_vec = BigInt::to_bytes(&self.y_coor().unwrap());
 
-        let mut raw_x: Vec<u8> = Vec::new();
-        let mut raw_y: Vec<u8> = Vec::new();
-        raw_x.extend(vec![0u8; 32 - x_vec.len()]);
-        raw_x.extend(x_vec);
+                let mut raw_x: Vec<u8> = Vec::new();
+                let mut raw_y: Vec<u8> = Vec::new();
+                raw_x.extend(vec![0u8; 32 - x_vec.len()]);
+                raw_x.extend(x_vec);
 
-        raw_y.extend(vec![0u8; 32 - y_vec.len()]);
-        raw_y.extend(y_vec);
+                raw_y.extend(vec![0u8; 32 - y_vec.len()]);
+                raw_y.extend(y_vec);
 
-        v.extend(raw_x);
-        v.extend(raw_y);
-        v
+                v.extend(raw_x);
+                v.extend(raw_y);
+                v
+            }
+        }
     }
 
     fn scalar_mul(&self, fe: &Self::SecretKey) -> Secp256k1Point {
@@ -729,6 +734,8 @@ mod tests {
         //add point should not panic
         let point3 = point1.add_point(&point2.get_element());
         println!("get zero point: {:?}", point3);
+        println!("zero point serialized: {:?}", point3.pk_to_key_slice());
+        println!("zero scalar: {:?}", FE::zero());
     }
 
     #[test]
