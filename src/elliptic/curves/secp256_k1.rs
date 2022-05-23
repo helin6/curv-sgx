@@ -388,11 +388,16 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_65.copy_from_slice(&bytes_slice[0..65]);
-                let result = PK::parse_slice(&bytes_array_65,None);
-                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                let ge = if bytes_array_65[1..] == [0u8; 64] {
+                    None
+                } else {
+                    let result = PK::parse_slice(&bytes_array_65,None);
+                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    Some(result.unwrap())
+                };
                 Ok(Secp256k1Point {
                     purpose: "random",
-                    ge: Some(result.unwrap()),
+                    ge
                 })
             }
 
@@ -405,11 +410,16 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_33.copy_from_slice(&bytes_slice[0..33]);
-                let result = PK::parse_slice(&bytes_array_33,None);
-                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                let ge = if bytes_array_33[1..] == [0u8; 32] {
+                    None
+                } else {
+                    let result = PK::parse_slice(&bytes_array_33,None);
+                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    Some(result.unwrap())
+                };
                 Ok(Secp256k1Point {
                     purpose: "random",
-                    ge: Some(result.unwrap()),
+                    ge,
                 })
             }
             _ => {
@@ -420,11 +430,17 @@ impl ECPoint for Secp256k1Point {
                 let bytes_slice = &template[..];
 
                 bytes_array_65.copy_from_slice(&bytes_slice[0..65]);
-                let result = PK::parse_slice(&bytes_array_65,None);
-                if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+
+                let ge = if bytes_array_65[1..] == [0u8; 64] {
+                    None
+                } else {
+                    let result = PK::parse_slice(&bytes_array_65,None);
+                    if result.is_err() { return Err(ErrorKey::InvalidPublicKey); }
+                    Some(result.unwrap())
+                };
                 Ok(Secp256k1Point {
                     purpose: "random",
-                    ge: Some(result.unwrap()),
+                    ge,
                 })
             }
         }
@@ -544,10 +560,16 @@ impl ECPoint for Secp256k1Point {
         let mut v = vec![4_u8];
         v.extend(vec_x);
         v.extend(vec_y);
-
+        let mut tmp = v.clone();
+        tmp.remove(0);
+        let ge = if tmp ==  vec![0; v.len() - 1 as usize] {
+            None
+        } else {
+            Some(PK::parse_slice(&v,None).unwrap())
+        };
         Secp256k1Point {
             purpose: "base_fe",
-            ge: Some(PK::parse_slice(&v,None).unwrap()),
+            ge
         }
     }
 }
@@ -735,7 +757,11 @@ mod tests {
         let point3 = point1.add_point(&point2.get_element());
         println!("get zero point: {:?}", point3);
         println!("zero point serialized: {:?}", point3.pk_to_key_slice());
-        println!("zero scalar: {:?}", FE::zero());
+        let point4 = GE::from_coor(&BigInt::zero(), &BigInt::zero());
+        println!("point from zero bigint: {:?}", point4);
+        let point5 = GE::from_bytes(&[0; 65]).unwrap();
+        println!("zero point from &[u8]: {:?}", point5);
+        println!("zero point mul scalar: {:?}", point5.scalar_mul(&Secp256k1Scalar::new_random().get_element()));
     }
 
     #[test]
